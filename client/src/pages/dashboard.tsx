@@ -19,7 +19,6 @@ import { ProfileSwitcher } from "@/components/profile-switcher";
 import { useSearchProfiles } from "@/hooks/use-search-profiles";
 import { useToast } from "@/hooks/use-toast";
 import type { Grant, Company, GrantProject } from "@shared/schema";
-import { calculateMatchScore } from "@/lib/matching";
 import { format, differenceInDays } from "date-fns";
 import { sv } from "date-fns/locale";
 
@@ -118,6 +117,16 @@ export default function Dashboard() {
   });
 
   const { selectedProfile } = useSearchProfiles();
+  const isProjectPursuit = selectedProfile?.kind === "project";
+  const pursuitMeta = [
+    isProjectPursuit && selectedProfile?.budgetSek
+      ? `${Number(selectedProfile.budgetSek).toLocaleString("sv-SE")} SEK`
+      : null,
+    isProjectPursuit ? selectedProfile?.timeframe : null,
+  ].filter(Boolean).join(" · ");
+  const pursuitSubtitle = isProjectPursuit && selectedProfile?.description
+    ? selectedProfile.description
+    : t('dashboard.subtitle');
   const { data: topMatches, isLoading: matchesLoading } = useQuery<TopMatch[]>({
     queryKey: [
       selectedProfile && !selectedProfile.isDefault
@@ -136,8 +145,17 @@ export default function Dashboard() {
     retry: false,
   });
 
-  const { data: grants } = useQuery<Grant[]>({
-    queryKey: ["/api/grants"],
+  const urgentQueryString = [
+    "status=open,upcoming",
+    "deadlineDays=14",
+    "sort=match",
+    "pageSize=5",
+    "minScore=25",
+    selectedProfile ? `profileId=${selectedProfile.id}` : "",
+  ].filter(Boolean).join("&");
+
+  const { data: urgentPage } = useQuery<{ items: (Grant & { matchScore: number | null })[] }>({
+    queryKey: [`/api/grants?${urgentQueryString}`],
   });
 
   const activeProjects = (projects || []).filter(p => p.status === "active").slice(0, 3);
@@ -145,32 +163,13 @@ export default function Dashboard() {
 
   const company = companies?.[0] || null;
 
+  // Server-scored, deadline-windowed and already limited to five.
   const urgentDeadlineGrants = useMemo(() => {
-    const grantsArray = Array.isArray(grants) ? grants : [];
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    return grantsArray
-      .filter((g) => {
-        if (!g.deadline) return false;
-        const deadline = new Date(g.deadline);
-        const daysLeft = Math.ceil(
-          (deadline.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-        );
-        return daysLeft >= 0 && daysLeft <= 14;
-      })
-      .map((g) => {
-        const scoreResult = company
-          ? calculateMatchScore(company, g, selectedProfile)
-          : null;
-        return { ...g, matchScore: scoreResult?.score ?? 0 };
-      })
-      .filter((g) => !company || g.matchScore >= 25)
-      .sort((a, b) =>
-        new Date(a.deadline!).getTime() - new Date(b.deadline!).getTime()
-      )
-      .slice(0, 5);
-  }, [grants, company, selectedProfile]);
+    const items = urgentPage?.items ?? [];
+    return [...items]
+      .sort((a, b) => new Date(a.deadline!).getTime() - new Date(b.deadline!).getTime())
+      .map((g) => ({ ...g, matchScore: g.matchScore ?? 0 }));
+  }, [urgentPage]);
 
   const profilePct = profileCompletion?.percentage ?? 0;
   const totalInteractions = progress?.completedCount ?? 0;
@@ -197,36 +196,43 @@ export default function Dashboard() {
         noindex={true}
       />
       <div className="space-y-8 animate-fade-in">
-        {hasCompany && (
-          <div className="flex items-center gap-2" data-testid="row-profile-switcher">
-            <ProfileSwitcher companyId={company?.id} />
-          </div>
-        )}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 to-cyan-600 p-8 text-white">
-          <div className="absolute inset-0 bg-grid-white/10" />
-          <div className="relative z-10">
-            <h1 className="text-3xl font-bold tracking-tight mb-2" data-testid="text-dashboard-title">
-              {t('dashboard.welcome')}
-            </h1>
-            <p className="text-blue-100 max-w-xl" data-testid="text-dashboard-subtitle">
-              {t('dashboard.subtitle')}
-            </p>
-            <div className="mt-6 flex gap-3 flex-wrap">
-              <Button variant="secondary" size="lg" asChild data-testid="button-explore-grants">
-                <Link href="/bidrag">
-                  <Target className="mr-2 h-5 w-5" />
-                  {t('dashboard.exploreGrants')}
-                </Link>
-              </Button>
-              {hasCompany && (
-                <Button variant="outline" size="lg" className="bg-white/10 border-white/30 text-white" asChild>
-                  <Link href="/ansokan">
-                    <FileText className="mr-2 h-5 w-5" />
-                    {t('dashboard.myApplications')}
-                  </Link>
-                </Button>
+        {/* Pursuit header — the selected search profile frames everything
+            below it, replacing the decorative gradient banner. */}
+        <div className="flex flex-wrap items-start justify-between gap-4 border-b pb-6">
+          <div className="min-w-0 space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-sm bg-accent px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-accent-foreground">
+                {isProjectPursuit
+                  ? t('dashboard.pursuit.project', 'Projektsatsning')
+                  : t('dashboard.pursuit.core', 'Kärnverksamhet')}
+              </span>
+              {pursuitMeta && (
+                <span className="text-xs text-muted-foreground" data-testid="text-pursuit-meta">{pursuitMeta}</span>
               )}
             </div>
+            <h1 className="font-serif text-3xl font-semibold tracking-tight" data-testid="text-dashboard-title">
+              {selectedProfile?.name || company?.companyName || t('dashboard.welcome')}
+            </h1>
+            <p className="max-w-2xl text-sm text-muted-foreground" data-testid="text-dashboard-subtitle">
+              {pursuitSubtitle}
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {hasCompany && <ProfileSwitcher companyId={company?.id} />}
+            <Button asChild data-testid="button-explore-grants">
+              <Link href="/bidrag">
+                <Target className="mr-2 h-4 w-4" />
+                {t('dashboard.exploreGrants')}
+              </Link>
+            </Button>
+            {hasCompany && (
+              <Button variant="outline" asChild data-testid="button-my-applications">
+                <Link href="/ansokan">
+                  <FileText className="mr-2 h-4 w-4" />
+                  {t('dashboard.myApplications')}
+                </Link>
+              </Button>
+            )}
           </div>
         </div>
 
