@@ -27,7 +27,6 @@ import Grants from "@/pages/grants";
 import GrantDetail from "@/pages/grant-detail";
 import GrantApply from "@/pages/grant-apply";
 import Company from "@/pages/company";
-import Applications from "@/pages/applications";
 import ApplicationsList from "@/pages/applications-list";
 import AdminUsers from "@/pages/admin/users";
 import AdminSources from "@/pages/admin/sources";
@@ -75,7 +74,7 @@ function Router() {
       <Route path="/grants/:id" component={GrantDetail} />
       <Route path="/company" component={Company} />
       <Route path="/ansokan" component={ApplicationsList} />
-      <Route path="/applications" component={Applications} />
+      <Route path="/applications" component={ApplicationsList} />
       <Route path="/admin/users" component={AdminUsers} />
       <Route path="/admin/sources" component={AdminSources} />
       <Route path="/admin/sources/new" component={AdminSourceNew} />

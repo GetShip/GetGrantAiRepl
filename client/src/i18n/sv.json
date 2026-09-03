@@ -737,12 +737,17 @@
     "tabs": {
       "all": "Alla ({{count}})",
       "drafts": "Utkast ({{count}})",
-      "submitted": "Inskickade ({{count}})"
+      "submitted": "Inskickade ({{count}})",
+      "decided": "Avgjorda ({{count}})"
     },
     "status": {
       "draft": "Utkast",
       "generated": "Genererad",
-      "submitted": "Inskickad"
+      "submitted": "Inskickad",
+      "under_review": "Under granskning",
+      "approved": "Beviljad",
+      "rejected": "Avslagen",
+      "withdrawn": "Tillbakadragen"
     },
     "unknownGrant": "Okänt bidrag",
     "unknownSource": "Okänd källa",
@@ -772,6 +777,22 @@
       "deletedDesc": "Ansökan har tagits bort.",
       "deleteError": "Fel",
       "deleteErrorDesc": "Kunde inte ta bort ansökan."
+    },
+    "recordOutcome": "Registrera beslut",
+    "approved": "Beviljat — grattis!",
+    "approvedWithProject": "Ansökan är markerad som beviljad och ett projekt är skapat.",
+    "approvedOnly": "Ansökan är markerad som beviljad.",
+    "approvedFailed": "Kunde inte spara beslutet",
+    "rejectedSaved": "Registrerat som avslag",
+    "outcomeDialog": {
+      "title": "Vad blev beslutet?",
+      "desc": "Registrera utfallet för ansökan.",
+      "descFor": "Registrera utfallet för {{title}}.",
+      "amount": "Beviljat belopp (SEK)",
+      "createProject": "Skapa ett projekt av den",
+      "createProjectHint": "Beviljade medel behöver följas upp och redovisas — projektet blir platsen för det.",
+      "approved": "Vi fick bidraget",
+      "rejected": "Vi fick avslag"
     }
   },
   "pricing": {

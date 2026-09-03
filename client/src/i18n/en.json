@@ -735,12 +735,17 @@
     "tabs": {
       "all": "All ({{count}})",
       "drafts": "Drafts ({{count}})",
-      "submitted": "Submitted ({{count}})"
+      "submitted": "Submitted ({{count}})",
+      "decided": "Decided ({{count}})"
     },
     "status": {
       "draft": "Draft",
       "generated": "Generated",
-      "submitted": "Submitted"
+      "submitted": "Submitted",
+      "under_review": "Under review",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "withdrawn": "Withdrawn"
     },
     "unknownGrant": "Unknown grant",
     "unknownSource": "Unknown source",
@@ -770,6 +775,22 @@
       "deletedDesc": "The application has been deleted.",
       "deleteError": "Error",
       "deleteErrorDesc": "Could not delete application."
+    },
+    "recordOutcome": "Record decision",
+    "approved": "Approved — congratulations!",
+    "approvedWithProject": "The application is marked approved and a project has been created.",
+    "approvedOnly": "The application is marked approved.",
+    "approvedFailed": "Could not save the decision",
+    "rejectedSaved": "Recorded as rejected",
+    "outcomeDialog": {
+      "title": "What was the decision?",
+      "desc": "Record the outcome for this application.",
+      "descFor": "Record the outcome for {{title}}.",
+      "amount": "Awarded amount (SEK)",
+      "createProject": "Create a project from it",
+      "createProjectHint": "Awarded funding has to be followed up and reported — the project is where that happens.",
+      "approved": "We got it",
+      "rejected": "We were turned down"
     }
   },
   "pricing": {
