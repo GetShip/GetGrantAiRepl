@@ -504,6 +504,26 @@ export async function registerRoutes(
     }
   });
 
+  // The grants page has always asked for this list to populate its funder
+  // filter; the route was never defined, so the dropdown offered "all sources"
+  // and nothing else while 80+ funders sat in the table. Reads the shared index
+  // rather than the grants table so it costs nothing on a warm cache.
+  app.get("/api/grants/sources", async (_req, res) => {
+    try {
+      const { getGrantIndex } = await import("./services/grantSearch");
+      const index = await getGrantIndex();
+      const names = new Set<string>();
+      for (const grant of index) {
+        if (grant.status === "closed") continue;
+        if (grant.sourceName) names.add(grant.sourceName);
+      }
+      res.json([...names].sort((a, b) => a.localeCompare(b, "sv")));
+    } catch (error) {
+      console.error("Failed to list grant sources:", error);
+      res.status(500).json({ error: "Failed to list sources" });
+    }
+  });
+
   app.get("/api/grants/eligibility-overview", isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub;
