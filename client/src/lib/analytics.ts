@@ -16,6 +16,7 @@ class AnalyticsService {
     return this.posthogOn || this.gaOn;
   }
 
+
   init() {
     if (typeof window === 'undefined') return;
 
@@ -25,21 +26,54 @@ class AnalyticsService {
         api_host: import.meta.env.VITE_POSTHOG_HOST || 'https://eu.i.posthog.com',
         person_profiles: 'identified_only',
         capture_pageview: false,
+        // Nothing is stored or sent before the visitor answers the banner.
+        // PostHog persists the answer itself, so there is no second consent
+        // store to keep in sync — get_explicit_consent_status() is the source
+        // of truth for GA4 too.
+        opt_out_capturing_by_default: true,
+        // Not enough on its own: opting out of *capturing* still let PostHog
+        // write a cookie holding distinct_id and $device_id before the visitor
+        // answered, which is exactly the identifier ePrivacy wants consent for.
+        // This stops it storing anything until opt-in.
+        opt_out_persistence_by_default: true,
       });
       this.posthogOn = true;
     }
 
+    if (this.consentStatus() === 'granted') this.enableConsentedSinks();
+  }
+
+  /** 'pending' means the banner has not been answered yet. */
+  consentStatus(): 'granted' | 'denied' | 'pending' {
+    if (!this.posthogOn) return 'pending';
+    return posthog.get_explicit_consent_status();
+  }
+
+  grantConsent() {
+    if (this.posthogOn) posthog.opt_in_capturing();
+    this.enableConsentedSinks();
+    // The visitor's first page view happened before they answered, and it is
+    // the one that carries the campaign that brought them — so replay it now
+    // rather than starting the session on page two.
+    this.pageView(window.location.pathname);
+  }
+
+  denyConsent() {
+    if (this.posthogOn) posthog.opt_out_capturing();
+    this.gaOn = false;
+  }
+
+  private enableConsentedSinks() {
     const gaId = import.meta.env.VITE_GA_MEASUREMENT_ID;
-    if (gaId) {
-      const tag = document.createElement('script');
-      tag.async = true;
-      tag.src = `https://www.googletagmanager.com/gtag/js?id=${gaId}`;
-      document.head.appendChild(tag);
-      (window as any).dataLayer = (window as any).dataLayer || [];
-      this.gtag('js', new Date());
-      this.gtag('config', gaId, { anonymize_ip: true });
-      this.gaOn = true;
-    }
+    if (!gaId || this.gaOn) return;
+    const tag = document.createElement('script');
+    tag.async = true;
+    tag.src = `https://www.googletagmanager.com/gtag/js?id=${gaId}`;
+    document.head.appendChild(tag);
+    (window as any).dataLayer = (window as any).dataLayer || [];
+    this.gtag('js', new Date());
+    this.gtag('config', gaId, { anonymize_ip: true });
+    this.gaOn = true;
   }
 
   private gtag(...args: unknown[]) {

@@ -1522,5 +1522,17 @@
     "quota": "Saved as pursuit {{position}} of {{limit}}",
     "saving": "Saving…",
     "fromPdf": "from pdf"
+  },
+  "consent": {
+    "label": "Measurement consent",
+    "body": "We measure how the service is used so we can improve it — which pages are visited and where people get stuck. Choose No and no cookies are stored and no measurement happens.",
+    "decline": "No thanks",
+    "accept": "I agree",
+    "settingsTitle": "Measurement",
+    "settingsGranted": "You have agreed to measurement.",
+    "settingsDenied": "Measurement is off.",
+    "settingsPending": "You have not answered yet.",
+    "withdraw": "Withdraw consent",
+    "give": "Allow measurement"
   }
 }

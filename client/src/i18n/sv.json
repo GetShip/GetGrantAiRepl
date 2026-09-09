@@ -1524,5 +1524,17 @@
     "quota": "Sparas som er {{position}}:a av {{limit}} projektsatsningar",
     "saving": "Sparar…",
     "fromPdf": "ur pdf"
+  },
+  "consent": {
+    "label": "Samtycke till mätning",
+    "body": "Vi mäter hur tjänsten används för att förbättra den — vilka sidor som besöks och var det tar stopp. Väljer du Nej sparas inga kakor och ingen mätning sker.",
+    "decline": "Nej tack",
+    "accept": "Jag godkänner",
+    "settingsTitle": "Mätning",
+    "settingsGranted": "Du har godkänt mätning.",
+    "settingsDenied": "Mätning är avstängd.",
+    "settingsPending": "Du har inte svarat än.",
+    "withdraw": "Återkalla samtycke",
+    "give": "Tillåt mätning"
   }
 }

@@ -5,6 +5,7 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { HelmetProvider } from "react-helmet-async";
 import { Toaster } from "@/components/ui/toaster";
+import { CookieConsent } from "@/components/cookie-consent";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
@@ -233,6 +234,7 @@ function App() {
                 <PoweredByFooter />
               </ErrorBoundary>
               <Toaster />
+              <CookieConsent />
             </TooltipProvider>
           </WhitelabelProvider>
         </ThemeProvider>

@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { NotificationPreferences } from "@/components/notification-preferences";
+import { ConsentSettings } from "@/components/consent-settings";
 import { SEO } from "@/components/seo";
 import { Settings as SettingsIcon } from "lucide-react";
 
@@ -21,6 +22,7 @@ export default function Settings() {
         </div>
 
         <NotificationPreferences />
+        <ConsentSettings />
       </div>
     </>
   );
