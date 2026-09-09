@@ -4,15 +4,25 @@ Allow: /bidrag
 Allow: /priser
 Disallow: /dashboard
 Disallow: /company
-Disallow: /applications
-Disallow: /calendar
-Disallow: /projects
 Disallow: /settings
 Disallow: /alerts
-Disallow: /content-library
 Disallow: /admin
 Disallow: /partner
-Disallow: /invite
 Disallow: /api/
+# Both spellings of every private route. The English ones were listed alone,
+# but the sidebar and every internal link use the Swedish ones, so these were
+# the URLs actually crawlable.
+Disallow: /applications
+Disallow: /ansokan
+Disallow: /calendar
+Disallow: /kalender
+Disallow: /projects
+Disallow: /projekt
+Disallow: /content-library
+Disallow: /bibliotek
+# Invite links carry a token in the path.
+Disallow: /invite
+Disallow: /invites
+Disallow: /join
 
 Sitemap: https://getgrant.ai/sitemap.xml
