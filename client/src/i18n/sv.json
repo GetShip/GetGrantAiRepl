@@ -173,8 +173,8 @@
       "description": "getgrant.ai använder AI för att hitta relevanta bidrag, analysera dina chanser, och skriva ansökningar åt dig. Helt på svenska.",
       "ctaPrimary": "Kom igång gratis",
       "ctaSecondary": "Se hur det fungerar",
-      "activeGrants": "1 700+ aktiva bidrag",
-      "fromSources": "Från 39+ svenska och europeiska bidragskällor",
+      "activeGrants": "{{grants}} aktiva bidrag",
+      "fromSources": "Från {{sources}} svenska och europeiska bidragskällor",
       "autoUpdated": "Uppdateras automatiskt",
       "inSwedish": "Svenska, norska & finska",
       "freeToStart": "Gratis att börja",
@@ -193,14 +193,14 @@
       "step1Title": "Skapa din profil",
       "step1Desc": "Ange din webbadress — AI bygger din profil på 60 sekunder",
       "step2Title": "AI hittar matchningar",
-      "step2Desc": "Vår AI analyserar 1 700+ bidrag från 39+ källor och visar de som passar er bäst.",
+      "step2Desc": "Vår AI analyserar {{grants}} bidrag från {{sources}} källor och visar de som passar er bäst.",
       "step3Title": "Generera ansökan",
       "step3Desc": "AI skriver en komplett ansökan på svenska baserat på er profil och bidragskraven."
     },
     "features": {
       "title": "Allt du behöver",
       "subtitle": "En komplett plattform för att hitta och ansöka om bidrag",
-      "grantSources": "39+ Bidragskällor",
+      "grantSources": "{{sources}} Bidragskällor",
       "grantSourcesDesc": "Vinnova, Tillväxtverket, EU, Almi, Energimyndigheten, Länsstyrelserna och fler. Automatiskt uppdaterat dagligen.",
       "aiMatching": "AI-Matchning",
       "aiMatchingDesc": "Claude AI analyserar er profil och visar exakt vilka bidrag ni kan söka.",
@@ -227,7 +227,7 @@
       "with": {
         "title": "Med GetGrant.ai",
         "time": "Första matchning på 5 minuter, full setup på ~10",
-        "ai": "AI filtrerar 1 700+ bidrag åt dig",
+        "ai": "AI filtrerar {{grants}} bidrag åt dig",
         "reminders": "Automatiska deadline-påminnelser",
         "scoring": "AI bedömer era chanser (0-100%)",
         "draft": "Färdig ansökan på svenska"
@@ -244,7 +244,7 @@
       "free": "GRATIS",
       "popular": "POPULÄRAST",
       "freeFeatures": [
-        "Sök bland alla 1 700+ bidrag",
+        "Sök bland alla {{grants}} bidrag",
         "Filtrera och bevaka",
         "Grundläggande bidragsinfo"
       ],
@@ -328,7 +328,7 @@
     },
     "getStarted": {
       "title": "Kom igång med getgrant.ai",
-      "description": "Ange din webbadress eller organisationsnummer så fyller AI:n i din profil automatiskt. Sedan matchar vi dig mot 1 700+ bidrag.",
+      "description": "Ange din webbadress eller organisationsnummer så fyller AI:n i din profil automatiskt. Sedan matchar vi dig mot {{grants}} bidrag.",
       "createProfile": "Starta AI-profilering"
     },
     "topMatches": "Toppmatchningar för dig",
@@ -338,7 +338,7 @@
     "noGrantsDesc": "Det finns inga bidrag i databasen. Bidrag läggs till automatiskt via skrapningsystemet.",
     "quickActions": {
       "findGrants": "Hitta bidrag",
-      "sources": "1 700+ källor",
+      "sources": "{{grants}} källor",
       "aiMatching": "AI-matchning",
       "autoAnalysis": "Automatisk analys",
       "generateApp": "Generera ansökan",
@@ -378,7 +378,7 @@
     "notFound": "Bidrag hittades inte",
     "notFoundDesc": "Bidraget du söker finns inte eller har tagits bort.",
     "seoTitle": "Bidrag & Finansiering",
-    "seoDesc": "Bläddra bland 1 700+ svenska bidrag och finansieringsmöjligheter från Vinnova, Tillväxtverket, EU, Almi, Länsstyrelserna och fler. Filtrera och hitta rätt bidrag för ditt företag.",
+    "seoDesc": "Bläddra bland {{grants}} svenska bidrag och finansieringsmöjligheter från Vinnova, Tillväxtverket, EU, Almi, Länsstyrelserna och fler. Filtrera och hitta rätt bidrag för ditt företag.",
     "noProfileTitle": "Skapa profil för personliga matchningar",
     "noProfileDesc": "Med en företagsprofil kan vår AI visa vilka bidrag som passar just ert företag och rangordna dem efter relevans.",
     "createProfile": "Skapa företagsprofil",
@@ -558,7 +558,21 @@
     "regeneratePlaceholder": "T.ex. \"Fokusera mer på hållbarhet\" eller \"Lägg till konkreta siffror\"",
     "regenerateWithAI": "Omgenerera med AI",
     "copyAll": "Kopiera allt",
-    "prefilledFromProfile": "Ifyllt från sökprofilen \"{{name}}\" — justera fritt innan du genererar."
+    "prefilledFromProfile": "Ifyllt från sökprofilen \"{{name}}\" — justera fritt innan du genererar.",
+    "steps": {
+      "pursuit": "Satsning",
+      "details": "Projektuppgifter",
+      "write": "Skriv avsnitt",
+      "review": "Granska"
+    },
+    "sectionsDone": "Avsnitt {{done}} av {{total}} klara",
+    "autosaveSaving": "Sparar…",
+    "autosaveSaved": "Sparat automatiskt",
+    "autosaveError": "Kunde inte spara — kopiera texten",
+    "pursuit": {
+      "title": "Vilken satsning gäller ansökan?",
+      "desc": "Valet avgör vilken bakgrund som fylls i åt er och vad ansökan skrivs utifrån."
+    }
   },
   "company": {
     "title": "Företagsprofil",
@@ -723,12 +737,17 @@
     "tabs": {
       "all": "Alla ({{count}})",
       "drafts": "Utkast ({{count}})",
-      "submitted": "Inskickade ({{count}})"
+      "submitted": "Inskickade ({{count}})",
+      "decided": "Avgjorda ({{count}})"
     },
     "status": {
       "draft": "Utkast",
       "generated": "Genererad",
-      "submitted": "Inskickad"
+      "submitted": "Inskickad",
+      "under_review": "Under granskning",
+      "approved": "Beviljad",
+      "rejected": "Avslagen",
+      "withdrawn": "Tillbakadragen"
     },
     "unknownGrant": "Okänt bidrag",
     "unknownSource": "Okänd källa",
@@ -758,6 +777,22 @@
       "deletedDesc": "Ansökan har tagits bort.",
       "deleteError": "Fel",
       "deleteErrorDesc": "Kunde inte ta bort ansökan."
+    },
+    "recordOutcome": "Registrera beslut",
+    "approved": "Beviljat — grattis!",
+    "approvedWithProject": "Ansökan är markerad som beviljad och ett projekt är skapat.",
+    "approvedOnly": "Ansökan är markerad som beviljad.",
+    "approvedFailed": "Kunde inte spara beslutet",
+    "rejectedSaved": "Registrerat som avslag",
+    "outcomeDialog": {
+      "title": "Vad blev beslutet?",
+      "desc": "Registrera utfallet för ansökan.",
+      "descFor": "Registrera utfallet för {{title}}.",
+      "amount": "Beviljat belopp (SEK)",
+      "createProject": "Skapa ett projekt av den",
+      "createProjectHint": "Beviljade medel behöver följas upp och redovisas — projektet blir platsen för det.",
+      "approved": "Vi fick bidraget",
+      "rejected": "Vi fick avslag"
     }
   },
   "pricing": {
@@ -769,7 +804,7 @@
     "manageSub": "Hantera prenumeration",
     "paymentNote": "Betala med kort • Avsluta när som helst",
     "freeFeatures": [
-      "Sök bland alla 1 700+ bidrag",
+      "Sök bland alla {{grants}} bidrag",
       "Filtrera på kategori, region och belopp",
       "Spara och bevaka bidrag",
       "Grundläggande bidragsinformation"
@@ -834,7 +869,7 @@
       "profile": "Skapa din företagsprofil",
       "profileDesc": "Berätta om ditt företag så vi kan hitta rätt bidrag",
       "matches": "Se dina första matchningar",
-      "matchesDesc": "Vi har analyserat 1 700+ bidrag åt dig"
+      "matchesDesc": "Vi har analyserat {{grants}} bidrag åt dig"
     },
     "stepOf": "Steg {{current}} av {{total}}",
     "profileComplete": "Profil klar!",
@@ -844,7 +879,7 @@
       "matching": "Matchning",
       "application": "Ansökan",
       "findGrants": "Hitta bidrag",
-      "findGrantsSub": "1 700+ källor",
+      "findGrantsSub": "{{grants}} källor",
       "aiMatching": "AI-matchning",
       "aiMatchingSub": "Automatisk analys",
       "generateApps": "Generera ansökningar",
@@ -875,7 +910,7 @@
       "errorFallback": "Något gick fel. Försök igen."
     },
     "matches": {
-      "analyzing": "Analyserar 1 700+ bidrag åt dig...",
+      "analyzing": "Analyserar {{grants}} bidrag åt dig...",
       "congrats": "Grattis! Vi hittade {{count}} matchningar",
       "congratsMultiple": "Grattis! Vi hittade flera matchningar",
       "bestMatches": "Här är bidragen som passar er bäst just nu",
@@ -929,7 +964,7 @@
   },
   "seo": {
     "defaultTitle": "getgrant.ai - Hitta svenska bidrag med AI",
-    "defaultDescription": "AI-driven plattform för att upptäcka, matcha och söka bland 1 700+ svenska bidrag och finansieringsmöjligheter från Vinnova, Tillväxtverket, EU, Almi, Länsstyrelserna och fler.",
+    "defaultDescription": "AI-driven plattform för att upptäcka, matcha och söka bland {{grants}} svenska bidrag och finansieringsmöjligheter från Vinnova, Tillväxtverket, EU, Almi, Länsstyrelserna och fler.",
     "defaultKeywords": "bidrag, finansiering, företagsbidrag, Vinnova, Tillväxtverket, EU-bidrag, Almi, Energimyndigheten, Länsstyrelserna, stiftelsebidrag, AI-ansökan, svenska bidrag"
   },
   "grantDetail": {
@@ -972,7 +1007,13 @@
     "runEligibilityPrompt": "Kör en behörighetskontroll för att se hur väl ni uppfyller kraven.",
     "noConcerns": "Inga orosmoment hittades",
     "noConcernsDesc": "Baserat på tillgänglig data ser allt bra ut. Kör en AI-analys för djupare insikter.",
-    "ruleMismatches": "Regelbaserade avvikelser"
+    "ruleMismatches": "Regelbaserade avvikelser",
+    "benchmark": {
+      "label": "Vad som faktiskt beviljas",
+      "median": "Median {{amount}}",
+      "spread": "8 av 10 beviljade belopp ligger i detta spann",
+      "basis": "Baserat på {{awards}} beviljade belopp till {{companies}} företag sedan {{from}}. Öppna data från finansiärerna."
+    }
   },
   "recentlyViewed": {
     "title": "Senast visade",
@@ -1449,8 +1490,8 @@
     "fieldDescription": "Vad går projektet ut på?",
     "fieldGoals": "Vad vill ni uppnå?",
     "fieldBudget": "Ungefärlig budget (SEK, valfritt)",
-    "createButton": "Skapa profil",
-    "created": "Sökprofil skapad",
+    "createButton": "Spara satsningen",
+    "created": "Satsningen sparad",
     "createFailed": "Kunde inte skapa profilen",
     "upgradeNeeded": "Uppgradering krävs",
     "uploadCta": "Har ni en pitch deck eller projektplan? Ladda upp en PDF så fyller vi i åt er",
@@ -1458,6 +1499,42 @@
     "extractedBadge": "Ifyllt från dokument — granska fälten nedan",
     "extractDone": "Utkast ifyllt från dokumentet",
     "extractReview": "Granska och justera fälten innan du sparar.",
-    "extractFailed": "Kunde inte läsa dokumentet"
+    "extractFailed": "Kunde inte läsa dokumentet",
+    "step1Title": "Ny satsning — steg 1 av 2",
+    "step1Desc": "Har ni redan skrivit ned projektet? Ladda upp det, så läser vi ut fälten åt er. Ni granskar allt innan något sparas.",
+    "uploadTitle": "Ladda upp pitch deck eller projektplan",
+    "uploadHint": "PDF",
+    "fillManually": "Eller fyll i själv",
+    "step2Title": "Steg 2 av 2 — granska vad vi läste ur dokumentet",
+    "step2Desc": "Vi föreslår, ni bestämmer. Justera fritt — inget sparas förrän ni godkänner.",
+    "step2TitleManual": "Beskriv satsningen",
+    "step2DescManual": "Det här styr vilka utlysningar ni matchas mot. Inget sparas förrän ni godkänner.",
+    "changeFile": "Byt fil",
+    "readQuality": "Läskvalitet",
+    "fieldsFromDoc": "fält ifyllda från dokumentet",
+    "howUsed": "Så används satsningen",
+    "howUsed1": "Utlysningar rankas mot det här projektet i stället för mot kärnverksamheten.",
+    "howUsed2": "Bevakningar och deadlines följer satsningen.",
+    "howUsed3": "Ansökningar ni startar hämtar sin bakgrund härifrån.",
+    "fieldTimeframe": "Tidsram",
+    "fieldTimeframePlaceholder": "18 månader",
+    "fieldKeywords": "Nyckelord",
+    "addKeyword": "lägg till",
+    "matchPreview": "{{count}} utlysningar matchar den här satsningen just nu",
+    "quota": "Sparas som er {{position}}:a av {{limit}} projektsatsningar",
+    "saving": "Sparar…",
+    "fromPdf": "ur pdf"
+  },
+  "consent": {
+    "label": "Samtycke till mätning",
+    "body": "Vi mäter hur tjänsten används för att förbättra den — vilka sidor som besöks och var det tar stopp. Väljer du Nej sparas inga kakor och ingen mätning sker.",
+    "decline": "Nej tack",
+    "accept": "Jag godkänner",
+    "settingsTitle": "Mätning",
+    "settingsGranted": "Du har godkänt mätning.",
+    "settingsDenied": "Mätning är avstängd.",
+    "settingsPending": "Du har inte svarat än.",
+    "withdraw": "Återkalla samtycke",
+    "give": "Tillåt mätning"
   }
 }

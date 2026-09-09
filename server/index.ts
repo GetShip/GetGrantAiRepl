@@ -1,4 +1,6 @@
 import "dotenv/config";
+// Validates configuration on import — must stay above every other import.
+import "./env";
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
@@ -168,6 +170,14 @@ app.use((req, res, next) => {
   
   await registerRoutes(httpServer, app);
 
+  // Scraper rows left at "running" by a previous process can never complete.
+  try {
+    const { reapStaleScraperLogs } = await import("./scripts/reap-stale-scraper-logs");
+    await reapStaleScraperLogs();
+  } catch (error) {
+    console.error("Failed to reap stale scraper logs:", error);
+  }
+
   // Seed database with sample data
   try {
     await seedDatabase();
@@ -229,6 +239,14 @@ app.use((req, res, next) => {
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
+  // An unmatched /api path must not reach the client catch-all below. Without
+  // this, a missing or renamed route answers 200 with index.html, so a broken
+  // endpoint looks healthy to anything checking status codes — which is how a
+  // deleted route once reached production.
+  app.all("/api/{*path}", (req, res) => {
+    res.status(404).json({ error: `No API route for ${req.method} ${req.path}` });
+  });
+
   if (process.env.NODE_ENV === "production") {
     serveStatic(app);
   } else {

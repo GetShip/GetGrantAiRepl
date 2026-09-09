@@ -1,40 +1,99 @@
+import posthog from 'posthog-js';
+
 interface EventProperties {
   [key: string]: string | number | boolean | undefined;
 }
 
+// Every call below used to reach window.__analytics, which nothing ever
+// assigned — so all of it was a no-op behind an empty catch. Two sinks now:
+// PostHog for product funnels and replay, GA4 so paid traffic has history to
+// compare against when it starts. Either is optional; a missing key just
+// disables that sink.
 class AnalyticsService {
-  private enabled = false;
+  private posthogOn = false;
+  private gaOn = false;
+  private get enabled() {
+    return this.posthogOn || this.gaOn;
+  }
+
 
   init() {
-    const key = import.meta.env.VITE_POSTHOG_KEY;
-    if (key && typeof window !== 'undefined') {
-      this.enabled = true;
-      console.log('[Analytics] Initialized');
+    if (typeof window === 'undefined') return;
+
+    const posthogKey = import.meta.env.VITE_POSTHOG_KEY;
+    if (posthogKey) {
+      posthog.init(posthogKey, {
+        api_host: import.meta.env.VITE_POSTHOG_HOST || 'https://eu.i.posthog.com',
+        person_profiles: 'identified_only',
+        capture_pageview: false,
+        // Nothing is stored or sent before the visitor answers the banner.
+        // PostHog persists the answer itself, so there is no second consent
+        // store to keep in sync — get_explicit_consent_status() is the source
+        // of truth for GA4 too.
+        opt_out_capturing_by_default: true,
+        // Not enough on its own: opting out of *capturing* still let PostHog
+        // write a cookie holding distinct_id and $device_id before the visitor
+        // answered, which is exactly the identifier ePrivacy wants consent for.
+        // This stops it storing anything until opt-in.
+        opt_out_persistence_by_default: true,
+      });
+      this.posthogOn = true;
     }
+
+    if (this.consentStatus() === 'granted') this.enableConsentedSinks();
+  }
+
+  /** 'pending' means the banner has not been answered yet. */
+  consentStatus(): 'granted' | 'denied' | 'pending' {
+    if (!this.posthogOn) return 'pending';
+    return posthog.get_explicit_consent_status();
+  }
+
+  grantConsent() {
+    if (this.posthogOn) posthog.opt_in_capturing();
+    this.enableConsentedSinks();
+    // The visitor's first page view happened before they answered, and it is
+    // the one that carries the campaign that brought them — so replay it now
+    // rather than starting the session on page two.
+    this.pageView(window.location.pathname);
+  }
+
+  denyConsent() {
+    if (this.posthogOn) posthog.opt_out_capturing();
+    this.gaOn = false;
+  }
+
+  private enableConsentedSinks() {
+    const gaId = import.meta.env.VITE_GA_MEASUREMENT_ID;
+    if (!gaId || this.gaOn) return;
+    const tag = document.createElement('script');
+    tag.async = true;
+    tag.src = `https://www.googletagmanager.com/gtag/js?id=${gaId}`;
+    document.head.appendChild(tag);
+    (window as any).dataLayer = (window as any).dataLayer || [];
+    this.gtag('js', new Date());
+    this.gtag('config', gaId, { anonymize_ip: true });
+    this.gaOn = true;
+  }
+
+  private gtag(...args: unknown[]) {
+    (window as any).dataLayer?.push(args);
   }
 
   private send(eventName: string, properties?: EventProperties) {
     if (!this.enabled) return;
-    try {
-      if (typeof window !== 'undefined' && (window as any).__analytics) {
-        (window as any).__analytics.track(eventName, properties);
-      }
-    } catch (e) {
-    }
+    if (this.posthogOn) posthog.capture(eventName, properties);
+    if (this.gaOn) this.gtag('event', eventName, properties);
   }
 
   pageView(pageName: string) {
-    this.send('page_view', { page: pageName });
+    if (this.posthogOn) posthog.capture('$pageview', { page: pageName });
+    if (this.gaOn) this.gtag('event', 'page_view', { page_title: pageName });
   }
 
   identify(userId: string, traits?: Record<string, string>) {
-    if (!this.enabled) return;
-    try {
-      if (typeof window !== 'undefined' && (window as any).__analytics) {
-        (window as any).__analytics.identify(userId, traits);
-      }
-    } catch (e) {
-    }
+    if (this.posthogOn) posthog.identify(userId, traits);
+    if (this.gaOn) this.gtag('set', { user_id: userId });
   }
 
   signupStarted(method: string) {

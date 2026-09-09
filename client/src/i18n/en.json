@@ -173,8 +173,8 @@
       "description": "getgrant.ai uses AI to find relevant grants, analyze your chances, and write applications for you. Fully in Swedish.",
       "ctaPrimary": "Get started for free",
       "ctaSecondary": "See how it works",
-      "activeGrants": "1,700+ active grants",
-      "fromSources": "From 39+ Swedish and European grant sources",
+      "activeGrants": "{{grants}} active grants",
+      "fromSources": "From {{sources}} Swedish and European grant sources",
       "autoUpdated": "Auto-updated daily",
       "inSwedish": "Swedish, Norwegian & Finnish",
       "freeToStart": "Free to start",
@@ -193,14 +193,14 @@
       "step1Title": "Create your profile",
       "step1Desc": "Enter your website — AI builds your profile in 60 seconds",
       "step2Title": "AI finds matches",
-      "step2Desc": "Our AI analyzes 1,700+ grants from 39+ sources and shows the ones that suit you best.",
+      "step2Desc": "Our AI analyzes {{grants}} grants from {{sources}} sources and shows the ones that suit you best.",
       "step3Title": "Generate application",
       "step3Desc": "AI writes a complete application in Swedish based on your profile and grant requirements."
     },
     "features": {
       "title": "Everything you need",
       "subtitle": "A complete platform for finding and applying for grants",
-      "grantSources": "39+ Grant Sources",
+      "grantSources": "{{sources}} Grant Sources",
       "grantSourcesDesc": "Vinnova, Tillväxtverket, EU, Almi, Energimyndigheten, Länsstyrelserna and more. Automatically updated daily.",
       "aiMatching": "AI Matching",
       "aiMatchingDesc": "Claude AI analyzes your profile and shows exactly which grants you can apply for.",
@@ -227,7 +227,7 @@
       "with": {
         "title": "With GetGrant.ai",
         "time": "First match in 5 minutes, full setup in ~10",
-        "ai": "AI filters 1,700+ grants for you",
+        "ai": "AI filters {{grants}} grants for you",
         "reminders": "Automatic deadline reminders",
         "scoring": "AI assesses your chances (0-100%)",
         "draft": "Complete application draft in Swedish"
@@ -244,7 +244,7 @@
       "free": "FREE",
       "popular": "MOST POPULAR",
       "freeFeatures": [
-        "Search all 1,700+ grants",
+        "Search all {{grants}} grants",
         "Filter and track",
         "Basic grant info"
       ],
@@ -328,7 +328,7 @@
     },
     "getStarted": {
       "title": "Get started with getgrant.ai",
-      "description": "Enter your website URL or organization number and AI will auto-fill your profile. Then we'll match you with 1,700+ grants.",
+      "description": "Enter your website URL or organization number and AI will auto-fill your profile. Then we'll match you with {{grants}} grants.",
       "createProfile": "Start AI profiling"
     },
     "topMatches": "Top matches for you",
@@ -338,7 +338,7 @@
     "noGrantsDesc": "There are no grants in the database. Grants are added automatically through the scraping system.",
     "quickActions": {
       "findGrants": "Find grants",
-      "sources": "1,700+ sources",
+      "sources": "{{grants}} sources",
       "aiMatching": "AI matching",
       "autoAnalysis": "Automatic analysis",
       "generateApp": "Generate application",
@@ -378,7 +378,7 @@
     "notFound": "Grant not found",
     "notFoundDesc": "The grant you're looking for doesn't exist or has been removed.",
     "seoTitle": "Grants & Funding",
-    "seoDesc": "Browse 1,700+ Swedish grants and funding opportunities from Vinnova, Tillväxtverket, EU, Almi, Länsstyrelserna and more. Filter and find the right grant for your company.",
+    "seoDesc": "Browse {{grants}} Swedish grants and funding opportunities from Vinnova, Tillväxtverket, EU, Almi, Länsstyrelserna and more. Filter and find the right grant for your company.",
     "noProfileTitle": "Create profile for personalized matches",
     "noProfileDesc": "With a company profile, our AI can show which grants suit your company and rank them by relevance.",
     "createProfile": "Create company profile",
@@ -558,7 +558,21 @@
     "regeneratePlaceholder": "E.g. \"Focus more on sustainability\" or \"Add concrete numbers\"",
     "regenerateWithAI": "Regenerate with AI",
     "copyAll": "Copy All",
-    "prefilledFromProfile": "Prefilled from the \"{{name}}\" search profile — adjust freely before generating."
+    "prefilledFromProfile": "Prefilled from the \"{{name}}\" search profile — adjust freely before generating.",
+    "steps": {
+      "pursuit": "Pursuit",
+      "details": "Project details",
+      "write": "Write sections",
+      "review": "Review"
+    },
+    "sectionsDone": "{{done}} of {{total}} sections done",
+    "autosaveSaving": "Saving…",
+    "autosaveSaved": "Saved automatically",
+    "autosaveError": "Could not save — copy your text",
+    "pursuit": {
+      "title": "Which pursuit is this application for?",
+      "desc": "The choice decides which background is filled in for you and what the application is written from."
+    }
   },
   "company": {
     "title": "Company Profile",
@@ -721,12 +735,17 @@
     "tabs": {
       "all": "All ({{count}})",
       "drafts": "Drafts ({{count}})",
-      "submitted": "Submitted ({{count}})"
+      "submitted": "Submitted ({{count}})",
+      "decided": "Decided ({{count}})"
     },
     "status": {
       "draft": "Draft",
       "generated": "Generated",
-      "submitted": "Submitted"
+      "submitted": "Submitted",
+      "under_review": "Under review",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "withdrawn": "Withdrawn"
     },
     "unknownGrant": "Unknown grant",
     "unknownSource": "Unknown source",
@@ -756,6 +775,22 @@
       "deletedDesc": "The application has been deleted.",
       "deleteError": "Error",
       "deleteErrorDesc": "Could not delete application."
+    },
+    "recordOutcome": "Record decision",
+    "approved": "Approved — congratulations!",
+    "approvedWithProject": "The application is marked approved and a project has been created.",
+    "approvedOnly": "The application is marked approved.",
+    "approvedFailed": "Could not save the decision",
+    "rejectedSaved": "Recorded as rejected",
+    "outcomeDialog": {
+      "title": "What was the decision?",
+      "desc": "Record the outcome for this application.",
+      "descFor": "Record the outcome for {{title}}.",
+      "amount": "Awarded amount (SEK)",
+      "createProject": "Create a project from it",
+      "createProjectHint": "Awarded funding has to be followed up and reported — the project is where that happens.",
+      "approved": "We got it",
+      "rejected": "We were turned down"
     }
   },
   "pricing": {
@@ -767,7 +802,7 @@
     "manageSub": "Manage subscription",
     "paymentNote": "Pay by card • Cancel anytime",
     "freeFeatures": [
-      "Search all 1,700+ grants",
+      "Search all {{grants}} grants",
       "Filter by category, region and amount",
       "Save and track grants",
       "Basic grant information"
@@ -834,7 +869,7 @@
       "profile": "Create your company profile",
       "profileDesc": "Tell us about your company so we can find the right grants",
       "matches": "See your first matches",
-      "matchesDesc": "We've analyzed 1,700+ grants for you"
+      "matchesDesc": "We've analyzed {{grants}} grants for you"
     },
     "stepOf": "Step {{current}} of {{total}}",
     "welcome": {
@@ -842,7 +877,7 @@
       "matching": "Matching",
       "application": "Application",
       "findGrants": "Find grants",
-      "findGrantsSub": "1,700+ sources",
+      "findGrantsSub": "{{grants}} sources",
       "aiMatching": "AI matching",
       "aiMatchingSub": "Automatic analysis",
       "generateApps": "Generate applications",
@@ -873,7 +908,7 @@
       "errorFallback": "Something went wrong. Please try again."
     },
     "matches": {
-      "analyzing": "Analyzing 1,700+ grants for you...",
+      "analyzing": "Analyzing {{grants}} grants for you...",
       "congrats": "Congratulations! We found {{count}} matches",
       "congratsMultiple": "Congratulations! We found several matches",
       "bestMatches": "Here are the grants that suit you best right now",
@@ -927,7 +962,7 @@
   },
   "seo": {
     "defaultTitle": "getgrant.ai - Find Swedish grants with AI",
-    "defaultDescription": "AI-powered platform for discovering, matching, and applying for 1,700+ Swedish grants and funding opportunities from Vinnova, Tillväxtverket, EU, Almi, Länsstyrelserna and more.",
+    "defaultDescription": "AI-powered platform for discovering, matching, and applying for {{grants}} Swedish grants and funding opportunities from Vinnova, Tillväxtverket, EU, Almi, Länsstyrelserna and more.",
     "defaultKeywords": "grants, funding, business grants, Vinnova, Tillväxtverket, EU grants, Almi, Energimyndigheten, Länsstyrelserna, foundation grants, AI application, Swedish grants"
   },
   "grantDetail": {
@@ -970,7 +1005,13 @@
     "runEligibilityPrompt": "Run an eligibility check to see how well you meet the requirements.",
     "noConcerns": "No concerns found",
     "noConcernsDesc": "Based on available data, everything looks good. Run an AI analysis for deeper insights.",
-    "ruleMismatches": "Rule-based mismatches"
+    "ruleMismatches": "Rule-based mismatches",
+    "benchmark": {
+      "label": "What is actually awarded",
+      "median": "Median {{amount}}",
+      "spread": "8 in 10 awards fall in this range",
+      "basis": "Based on {{awards}} awards to {{companies}} companies since {{from}}. Open data from the funders."
+    }
   },
   "recentlyViewed": {
     "title": "Recently Viewed",
@@ -1447,8 +1488,8 @@
     "fieldDescription": "What is the project about?",
     "fieldGoals": "What do you want to achieve?",
     "fieldBudget": "Approximate budget (SEK, optional)",
-    "createButton": "Create profile",
-    "created": "Search profile created",
+    "createButton": "Save pursuit",
+    "created": "Pursuit saved",
     "createFailed": "Could not create the profile",
     "upgradeNeeded": "Upgrade required",
     "uploadCta": "Have a pitch deck or project plan? Upload a PDF and we'll fill this in for you",
@@ -1456,6 +1497,42 @@
     "extractedBadge": "Filled in from document — review the fields below",
     "extractDone": "Draft filled in from the document",
     "extractReview": "Review and adjust the fields before saving.",
-    "extractFailed": "Could not read the document"
+    "extractFailed": "Could not read the document",
+    "step1Title": "New pursuit — step 1 of 2",
+    "step1Desc": "Already written the project down? Upload it and we will read the fields out for you. You review everything before anything is saved.",
+    "uploadTitle": "Upload pitch deck or project plan",
+    "uploadHint": "PDF",
+    "fillManually": "Or fill it in yourself",
+    "step2Title": "Step 2 of 2 — review what we read from the document",
+    "step2Desc": "We suggest, you decide. Adjust freely — nothing is saved until you approve.",
+    "step2TitleManual": "Describe the pursuit",
+    "step2DescManual": "This governs which calls you are matched against. Nothing is saved until you approve.",
+    "changeFile": "Change file",
+    "readQuality": "Read quality",
+    "fieldsFromDoc": "fields filled from the document",
+    "howUsed": "How the pursuit is used",
+    "howUsed1": "Calls are ranked against this project instead of your core business.",
+    "howUsed2": "Alerts and deadlines follow the pursuit.",
+    "howUsed3": "Applications you start draw their background from here.",
+    "fieldTimeframe": "Timeframe",
+    "fieldTimeframePlaceholder": "18 months",
+    "fieldKeywords": "Keywords",
+    "addKeyword": "add",
+    "matchPreview": "{{count}} calls match this pursuit right now",
+    "quota": "Saved as pursuit {{position}} of {{limit}}",
+    "saving": "Saving…",
+    "fromPdf": "from pdf"
+  },
+  "consent": {
+    "label": "Measurement consent",
+    "body": "We measure how the service is used so we can improve it — which pages are visited and where people get stuck. Choose No and no cookies are stored and no measurement happens.",
+    "decline": "No thanks",
+    "accept": "I agree",
+    "settingsTitle": "Measurement",
+    "settingsGranted": "You have agreed to measurement.",
+    "settingsDenied": "Measurement is off.",
+    "settingsPending": "You have not answered yet.",
+    "withdraw": "Withdraw consent",
+    "give": "Allow measurement"
   }
 }

@@ -362,120 +362,6 @@ export async function registerRoutes(
   });
 
   // Top matches for user (for onboarding and dashboard)
-  app.get("/api/grants/top-matches", async (req: any, res) => {
-    try {
-      const userId = req.user?.claims?.sub;
-      const companyId = req.query.companyId as string | undefined;
-      
-      let company = null;
-      
-      if (companyId && userId) {
-        const requestedCompany = await storage.getCompany(companyId);
-        if (requestedCompany && requestedCompany.userId === userId) {
-          company = requestedCompany;
-        }
-      } else if (userId) {
-        const companies = await storage.getCompaniesByUserId(userId);
-        company = companies[0] || null;
-      }
-      
-      const grants = await storage.getGrantsFiltered({ status: 'open' });
-
-      if (!company) {
-        const topGrants = grants.slice(0, 5).map(g => ({
-          ...g,
-          matchScore: Math.floor(Math.random() * 20) + 70,
-        }));
-        return res.json(topGrants);
-      }
-
-      // Relevance text: the selected search profile when one is provided
-      // (project-based matching), otherwise the company's industry.
-      let relevanceText = company.industry?.toLowerCase() || "";
-      const profileId = req.query.profileId as string | undefined;
-      if (profileId && userId) {
-        const [profile] = await db
-          .select()
-          .from(searchProfiles)
-          .where(and(
-            eq(searchProfiles.id, profileId),
-            eq(searchProfiles.userId, userId),
-            eq(searchProfiles.active, true),
-          ));
-        if (profile) {
-          const parts = [
-            ...(profile.focusAreas ?? []),
-            ...(profile.keywords ?? []),
-            profile.description ?? "",
-          ].filter(Boolean);
-          if (parts.length > 0) relevanceText = parts.join(" ").toLowerCase();
-        }
-      }
-
-      const scoredGrants = grants.map(grant => {
-        let score = 50;
-
-        if (grant.keywords && relevanceText) {
-          const grantKeywords = grant.keywords as string[];
-          const matches = grantKeywords.filter(k =>
-            relevanceText.includes(k.toLowerCase())
-          );
-          score += matches.length * 10;
-        }
-        
-        if (grant.targetGroup) {
-          const targetGroups = grant.targetGroup as string[];
-          if (targetGroups.includes('sme') && (company.employees || 0) < 250) score += 15;
-          if (targetGroups.includes('startup') && (company.employees || 0) < 50) score += 10;
-        }
-        
-        return { ...grant, matchScore: Math.min(score, 99) };
-      });
-      
-      const topGrants = scoredGrants
-        .sort((a, b) => b.matchScore - a.matchScore)
-        .slice(0, 5);
-      
-      res.json(topGrants);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch top matches" });
-    }
-  });
-
-  // Grant sources (for filters)
-  app.get("/api/grants/sources", async (req, res) => {
-    try {
-      const sources = await storage.getUniqueGrantSources();
-      res.json(sources);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch grant sources" });
-    }
-  });
-
-  // Upcoming deadlines API
-  app.get("/api/grants/deadlines/upcoming", async (req: any, res) => {
-    try {
-      const allGrants = await storage.getGrants();
-      const now = new Date();
-      const twoWeeksFromNow = new Date();
-      twoWeeksFromNow.setDate(twoWeeksFromNow.getDate() + 14);
-      
-      const upcomingGrants = allGrants
-        .filter(g => {
-          if (!g.deadline || g.status !== 'open') return false;
-          const deadline = new Date(g.deadline);
-          return deadline >= now && deadline <= twoWeeksFromNow;
-        })
-        .sort((a, b) => new Date(a.deadline!).getTime() - new Date(b.deadline!).getTime());
-      
-      res.json(upcomingGrants);
-    } catch (error) {
-      console.error('Fetch upcoming deadlines error:', error);
-      res.status(500).json({ error: 'Failed to fetch upcoming deadline grants' });
-    }
-  });
-
-  // Grants routes
   app.get("/api/grants", async (req, res) => {
     try {
       const { source, status, deadlineDays, amountMin, amountMax, search, matchProfile, market } = req.query;
@@ -592,7 +478,96 @@ export async function registerRoutes(
     }
   });
 
-  // ============ ELIGIBILITY CHECKER ROUTES ============
+  // Top matches are the first page of the same ranked search the grants list
+  // uses — same scoring, same market rules, same cache. It previously ran its
+  // own keyword heuristic, which disagreed with the list and ignored market.
+  app.get("/api/grants/top-matches", async (req: any, res) => {
+    try {
+      const userId = req.user?.claims?.sub ?? null;
+      const { searchGrants } = await import('./services/grantSearch');
+      const result = await searchGrants({
+        status: 'open',
+        userId,
+        companyId: (req.query.companyId as string | undefined) ?? null,
+        profileId: (req.query.profileId as string | undefined) ?? null,
+        market: (req.query.market as string | undefined) ?? undefined,
+        sort: 'match',
+        page: 1,
+        pageSize: 5,
+      });
+
+      // Historic shape: a bare array of grants carrying matchScore.
+      res.json(result.items.map((g) => ({ ...g, matchScore: g.matchScore ?? 50 })));
+    } catch (error) {
+      console.error('Top matches error:', error);
+      res.status(500).json({ error: "Failed to fetch top matches" });
+    }
+  });
+
+  // The grants page has always asked for this list to populate its funder
+  // filter; the route was never defined, so the dropdown offered "all sources"
+  // and nothing else while 80+ funders sat in the table. Reads the shared index
+  // rather than the grants table so it costs nothing on a warm cache.
+  // Replaces the three-line static file. The long tail is the whole organic
+  // case for a grant database — every open call is a page someone might search
+  // for — so the sitemap lists them instead of just the three landing pages.
+  // Closed and expired calls are left out: pointing Google at a page that says
+  // "this closed in 2024" earns nothing.
+  app.get("/sitemap.xml", async (_req, res) => {
+    try {
+      const { getGrantIndex } = await import("./services/grantSearch");
+      const index = await getGrantIndex();
+      const now = new Date();
+
+      const staticPages = [
+        { path: "/", changefreq: "weekly", priority: "1.0" },
+        { path: "/bidrag", changefreq: "daily", priority: "0.9" },
+        { path: "/priser", changefreq: "monthly", priority: "0.7" },
+      ];
+
+      const urls = staticPages.map(
+        (p) =>
+          `  <url>\n    <loc>${APP_URL}${p.path}</loc>\n` +
+          `    <changefreq>${p.changefreq}</changefreq>\n` +
+          `    <priority>${p.priority}</priority>\n  </url>`,
+      );
+
+      for (const grant of index) {
+        if (grant.status === "closed") continue;
+        if (grant.deadline && new Date(grant.deadline) < now) continue;
+        const lastmod = grant.createdAt ? new Date(grant.createdAt).toISOString().slice(0, 10) : null;
+        urls.push(
+          `  <url>\n    <loc>${APP_URL}/bidrag/${grant.id}</loc>\n` +
+            (lastmod ? `    <lastmod>${lastmod}</lastmod>\n` : "") +
+            `    <changefreq>weekly</changefreq>\n    <priority>0.6</priority>\n  </url>`,
+        );
+      }
+
+      res.type("application/xml").send(
+        `<?xml version="1.0" encoding="UTF-8"?>\n` +
+          `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join("\n")}\n</urlset>\n`,
+      );
+    } catch (error) {
+      console.error("Failed to build sitemap:", error);
+      res.status(500).type("text/plain").send("sitemap unavailable");
+    }
+  });
+
+  app.get("/api/grants/sources", async (_req, res) => {
+    try {
+      const { getGrantIndex } = await import("./services/grantSearch");
+      const index = await getGrantIndex();
+      const names = new Set<string>();
+      for (const grant of index) {
+        if (grant.status === "closed") continue;
+        if (grant.sourceName) names.add(grant.sourceName);
+      }
+      res.json([...names].sort((a, b) => a.localeCompare(b, "sv")));
+    } catch (error) {
+      console.error("Failed to list grant sources:", error);
+      res.status(500).json({ error: "Failed to list sources" });
+    }
+  });
 
   app.get("/api/grants/eligibility-overview", isAuthenticated, async (req: any, res) => {
     try {
@@ -608,8 +583,12 @@ export async function registerRoutes(
       const currentHash = hashProfile(company);
 
       const { checkEligibility } = await import("./services/eligibilityChecker");
-      const allGrants = await storage.getGrants();
-      const openGrants = allGrants.filter((g: any) => g.status === "open").slice(0, 200);
+      // checkEligibility reads only id, title and eligibilityCriteria, all of
+      // which the shared index carries — no full-table load needed.
+      const { getGrantIndex } = await import("./services/grantSearch");
+      const grantIndex = await getGrantIndex();
+      const openGrants = grantIndex.filter((g) => g.status === "open").slice(0, 200) as unknown as Grant[];
+      const openGrantById = new Map(openGrants.map((g) => [g.id, g]));
 
       const cachedChecks = await storage.getEligibilityChecksByCompanyAndHash(company.id, currentHash);
       const cachedGrantIds = new Set(cachedChecks.map(c => c.grantId));
@@ -622,9 +601,9 @@ export async function registerRoutes(
       if (isCacheHit) {
         allResults = cachedChecks.map(c => ({
           grantId: c.grantId,
-          grantTitle: openGrants.find(g => g.id === c.grantId)?.title || '',
-          source: openGrants.find(g => g.id === c.grantId)?.sourceName || '',
-          deadline: openGrants.find(g => g.id === c.grantId)?.deadline,
+          grantTitle: openGrantById.get(c.grantId)?.title || '',
+          source: openGrantById.get(c.grantId)?.sourceName || '',
+          deadline: openGrantById.get(c.grantId)?.deadline,
           score: c.score,
           checksPassed: (c.result as any)?.checksPassed || 0,
           checksTotal: (c.result as any)?.checksCompleted || 0,
@@ -633,7 +612,7 @@ export async function registerRoutes(
         }));
       } else {
         for (const check of cachedChecks) {
-          const grant = openGrants.find(g => g.id === check.grantId);
+          const grant = openGrantById.get(check.grantId);
           if (!grant) continue;
           allResults.push({
             grantId: check.grantId,
@@ -1786,6 +1765,78 @@ export async function registerRoutes(
     }
   });
 
+
+// Each scraper spawns a Python process that drives a Chromium instance. Firing
+// one per source at once put 21 browsers in the container simultaneously, which
+// is enough to exhaust its memory; when the process is killed the log rows it
+// owned are stranded at "running" forever. Start them a few at a time instead.
+const SCRAPER_CONCURRENCY = Number(process.env.SCRAPER_CONCURRENCY || 3);
+
+async function runWithConcurrency<T>(
+  items: T[],
+  limit: number,
+  run: (item: T) => Promise<void>,
+): Promise<void> {
+  const queue = [...items];
+  const workers = Array.from({ length: Math.max(1, Math.min(limit, queue.length)) }, async () => {
+    for (let item = queue.shift(); item !== undefined; item = queue.shift()) {
+      await run(item);
+    }
+  });
+  await Promise.all(workers);
+}
+
+  // POST /api/cron/import-gdp-awards - refresh the historical award data the
+  // benchmarks read. The GDP files are rebuilt daily; weekly is enough here,
+  // since a decision from last week does not move a median over 30 000 awards.
+  app.post("/api/cron/import-gdp-awards", async (req, res) => {
+    try {
+      const provided = req.headers["x-api-key"];
+      if (!process.env.CRON_API_KEY || provided !== process.env.CRON_API_KEY) {
+        return res.status(401).json({ error: "Invalid or missing API key" });
+      }
+
+      const { importGdpAwards } = await import("./scripts/import-gdp-awards");
+      const result = await importGdpAwards();
+      res.json({ message: "GDP awards imported", ...result });
+    } catch (error) {
+      console.error("Cron import-gdp-awards error:", error);
+      res.status(500).json({ error: "Failed to import GDP awards" });
+    }
+  });
+
+  // What this funder has actually awarded companies, from GDP historical data.
+  // Public: it is open data, and it is most useful to someone deciding whether
+  // a call is worth the effort before they sign up.
+  app.get("/api/benchmarks/funding", async (req, res) => {
+    try {
+      const { getFundingBenchmark } = await import("./services/fundingBenchmarks");
+      const result = await getFundingBenchmark({
+        funder: (req.query.funder as string) || undefined,
+        category: (req.query.category as string) || undefined,
+        county: (req.query.county as string) || undefined,
+        orgNumber: (req.query.orgNumber as string) || undefined,
+        sinceYear: req.query.sinceYear ? parseInt(req.query.sinceYear as string, 10) : undefined,
+      });
+      res.json(result);
+    } catch (error) {
+      console.error("Funding benchmark error:", error);
+      res.status(500).json({ error: "Failed to load funding benchmark" });
+    }
+  });
+
+  // Public: the counts shown on the marketing pages. No auth — this is the
+  // same information any visitor can read off the grants list.
+  app.get("/api/stats", async (_req, res) => {
+    try {
+      const { getPlatformStats } = await import("./services/platformStats");
+      res.json(await getPlatformStats());
+    } catch (error) {
+      console.error("Platform stats error:", error);
+      res.status(500).json({ error: "Failed to load stats" });
+    }
+  });
+
   // Cron endpoints for automation
   // POST /api/cron/scrape - Run scrapers by frequency (daily/weekly)
   // Can be triggered by external cron services like cron-job.org
@@ -1807,78 +1858,63 @@ export async function registerRoutes(
       const sources = await storage.getScraperSourcesByFrequency(frequency, true);
       const results: { sourceId: string; name: string; logId: string }[] = [];
       
+      // Log rows are created up front so the response can list them, but the
+      // processes themselves are queued: see SCRAPER_CONCURRENCY above.
+      const queued: Array<{ source: typeof sources[number]; logId: string }> = [];
       for (const source of sources) {
-        // Create log entry
         const log = await storage.createScraperLog({
           sourceId: source.id,
           status: "running",
           grantsFound: 0,
         });
-        
-        // Update last scraped time
-        await storage.updateScraperSource(source.id, {
-          lastScraped: new Date(),
-        });
-        
-        // Trigger Python scraper asynchronously
-        const scraperPath = path.join(process.cwd(), 'scrapers', 'main.py');
-        const pythonProcess = spawn(process.env.PYTHON_BIN || 'python3', [scraperPath, '--source-id', source.id], {
-          env: { ...process.env },
-          stdio: ['ignore', 'pipe', 'pipe'],
-          detached: false,
-        });
-        
-        let stdout = '';
-        let stderr = '';
-        
-        pythonProcess.stdout.on('data', (data) => {
-          stdout += data.toString();
-        });
-        
-        pythonProcess.stderr.on('data', (data) => {
-          stderr += data.toString();
-        });
-        
-        const timeout = setTimeout(() => {
-          pythonProcess.kill('SIGTERM');
-        }, 120000);
-        
-        pythonProcess.on('close', async (code) => {
-          clearTimeout(timeout);
-          try {
-            if (code !== 0) {
-              await storage.updateScraperLog(log.id, {
-                status: "failed",
-                errorMessage: stderr || `Process exited with code ${code}`,
-              });
-            } else {
-              const grantsMatch = stdout.match(/(\d+) grants found/);
-              const grantsFound = grantsMatch ? parseInt(grantsMatch[1], 10) : 0;
-              await storage.updateScraperLog(log.id, {
-                status: "success",
-                grantsFound,
-              });
-            }
-          } catch (updateError) {
-            console.error('Error updating scraper log:', updateError);
-          }
-        });
-        
-        pythonProcess.on('error', async (err) => {
-          clearTimeout(timeout);
-          try {
-            await storage.updateScraperLog(log.id, {
-              status: "failed",
-              errorMessage: `Failed to start scraper: ${err.message}`,
-            });
-          } catch (updateError) {
-            console.error('Error updating scraper log:', updateError);
-          }
-        });
-        
+        await storage.updateScraperSource(source.id, { lastScraped: new Date() });
+        queued.push({ source, logId: log.id });
         results.push({ sourceId: source.id, name: source.name, logId: log.id });
       }
-      
+
+      // Deliberately not awaited: the caller is a cron job that should get an
+      // acknowledgement, not hold a connection open for the whole sweep.
+      void runWithConcurrency(queued, SCRAPER_CONCURRENCY, ({ source, logId }) =>
+        new Promise<void>((resolve) => {
+          const scraperPath = path.join(process.cwd(), 'scrapers', 'main.py');
+          const pythonProcess = spawn(process.env.PYTHON_BIN || 'python3', [scraperPath, '--source-id', source.id], {
+            env: { ...process.env },
+            stdio: ['ignore', 'pipe', 'pipe'],
+            detached: false,
+          });
+
+          let stdout = '';
+          let stderr = '';
+          pythonProcess.stdout.on('data', (data) => { stdout += data.toString(); });
+          pythonProcess.stderr.on('data', (data) => { stderr += data.toString(); });
+
+          const timeout = setTimeout(() => pythonProcess.kill('SIGTERM'), 120000);
+
+          const finish = async (update: { status: string; errorMessage?: string; grantsFound?: number }) => {
+            clearTimeout(timeout);
+            try {
+              await storage.updateScraperLog(logId, update as any);
+            } catch (updateError) {
+              console.error('Error updating scraper log:', updateError);
+            }
+            resolve();
+          };
+
+          pythonProcess.on('close', (code) => {
+            if (code !== 0) {
+              void finish({ status: "failed", errorMessage: stderr || `Process exited with code ${code}` });
+            } else {
+              const grantsMatch = stdout.match(/(\d+) grants found/);
+              void finish({ status: "success", grantsFound: grantsMatch ? parseInt(grantsMatch[1], 10) : 0 });
+            }
+          });
+
+          pythonProcess.on('error', (err) => {
+            void finish({ status: "failed", errorMessage: `Failed to start scraper: ${err.message}` });
+          });
+        }),
+      ).catch((err) => console.error('[scrape] queue failed:', err));
+
       res.json({ 
         message: `Started ${results.length} ${frequency} scrapers`,
         scrapers: results
@@ -2053,7 +2089,17 @@ export async function registerRoutes(
         )
         .returning({ id: grants.id });
 
-      res.json({ message: "Expired grants closed", count: result.length });
+      // Same job, next step: retire the closed grants old enough to have
+      // stopped being useful. Skips anything a person has touched.
+      const { pruneClosedGrants } = await import('./services/pruneClosedGrants');
+      const pruned = await pruneClosedGrants();
+
+      res.json({
+        message: "Expired grants closed",
+        count: result.length,
+        pruned: pruned.removed,
+        retentionDays: pruned.retentionDays,
+      });
     } catch (error) {
       console.error('Cron close-expired error:', error);
       res.status(500).json({ error: "Failed to close expired grants" });
@@ -2780,26 +2826,24 @@ export async function registerRoutes(
       if (sources === 'all' || sources === 'matches') {
         const userCompanies = await storage.getCompaniesByUserId(userId);
         if (userCompanies.length > 0) {
-          const allGrants = await storage.getGrants();
-          for (const grant of allGrants) {
+          // Reads the shared index and the one scoring function the rest of
+          // the product uses; this endpoint previously loaded every grant and
+          // applied its own heuristic, so calendar scores disagreed with the
+          // grants list for the same grant.
+          const { getGrantIndex } = await import('./services/grantSearch');
+          const { calculateMatchScore } = await import('@shared/matching');
+          const company = userCompanies[0];
+          const grantIndex = await getGrantIndex();
+
+          for (const grant of grantIndex) {
             if (!grant.deadline || bookmarkGrantIds.has(grant.id)) continue;
             if (grant.status === 'closed') continue;
             const d = new Date(grant.deadline);
             if (d < startDate || d > endDate) continue;
-            const company = userCompanies[0];
-            let score = 0;
-            const grantIndustry = (grant.keywords || []).join(' ').toLowerCase();
-            const companyIndustry = (company.industry || '').toLowerCase();
-            if (companyIndustry && grantIndustry.includes(companyIndustry)) score += 30;
-            const grantTargets = (grant.targetGroup || []).map(t => t.toLowerCase());
-            if (grantTargets.length === 0 || grantTargets.includes('alla')) score += 20;
-            const grantLocation = (grant.description || '').toLowerCase();
-            const companyLocation = (company.location || '').toLowerCase();
-            if (companyLocation && grantLocation.includes(companyLocation)) score += 15;
-            if (grant.sourceName) score += 10;
-            score = Math.min(score, 100);
-            if (score >= 20) {
-              eventGrants.push({ grant, isBookmarked: false, matchScore: score });
+
+            const score = calculateMatchScore(company, grant as unknown as Grant).score;
+            if (score >= 25) {
+              eventGrants.push({ grant: grant as unknown as Grant, isBookmarked: false, matchScore: score });
             }
           }
         }

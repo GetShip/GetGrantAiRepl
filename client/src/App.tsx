@@ -1,9 +1,11 @@
+import { usePlatformStats } from "@/hooks/use-platform-stats";
 import { useState, useEffect } from "react";
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider, useQuery } from "@tanstack/react-query";
 import { HelmetProvider } from "react-helmet-async";
 import { Toaster } from "@/components/ui/toaster";
+import { CookieConsent } from "@/components/cookie-consent";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
@@ -26,7 +28,6 @@ import Grants from "@/pages/grants";
 import GrantDetail from "@/pages/grant-detail";
 import GrantApply from "@/pages/grant-apply";
 import Company from "@/pages/company";
-import Applications from "@/pages/applications";
 import ApplicationsList from "@/pages/applications-list";
 import AdminUsers from "@/pages/admin/users";
 import AdminSources from "@/pages/admin/sources";
@@ -74,7 +75,7 @@ function Router() {
       <Route path="/grants/:id" component={GrantDetail} />
       <Route path="/company" component={Company} />
       <Route path="/ansokan" component={ApplicationsList} />
-      <Route path="/applications" component={Applications} />
+      <Route path="/applications" component={ApplicationsList} />
       <Route path="/admin/users" component={AdminUsers} />
       <Route path="/admin/sources" component={AdminSources} />
       <Route path="/admin/sources/new" component={AdminSourceNew} />
@@ -113,6 +114,10 @@ function Router() {
 }
 
 function AppContent() {
+  // Publishes the live grant and source counts into i18n so every string that
+  // quotes them stays true, wherever it is rendered.
+  usePlatformStats();
+
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const { isWhitelabel } = useWhitelabel();
@@ -229,6 +234,7 @@ function App() {
                 <PoweredByFooter />
               </ErrorBoundary>
               <Toaster />
+              <CookieConsent />
             </TooltipProvider>
           </WhitelabelProvider>
         </ThemeProvider>
