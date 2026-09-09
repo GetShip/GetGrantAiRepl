@@ -49,6 +49,25 @@ async function main() {
     console.log(`${ok ? "✅" : "❌"} ${String(status).padEnd(4)} ${path.padEnd(38)} ${type}`);
   }
 
+  // The sitemap is XML, not JSON, and it is generated rather than a file now —
+  // so it can silently degrade to the SPA shell or to just the three landing
+  // pages without anyone noticing. Checks both.
+  try {
+    const res = await fetch(`${base}/sitemap.xml`, { redirect: "manual" });
+    const body = await res.text();
+    const urls = (body.match(/<url>/g) ?? []).length;
+    const isXml = body.trimStart().startsWith("<?xml");
+    const ok = res.status === 200 && isXml && urls > 10;
+    if (!ok) failed++;
+    console.log(
+      `${ok ? "✅" : "❌"} ${String(res.status).padEnd(4)} ${"/sitemap.xml".padEnd(38)} ` +
+      `${isXml ? "xml" : "NOT xml"}, ${urls} urls`
+    );
+  } catch (error) {
+    failed++;
+    console.log(`❌ ERR  ${"/sitemap.xml".padEnd(38)} ${error instanceof Error ? error.message : error}`);
+  }
+
   console.log();
   if (failed > 0) {
     console.error(

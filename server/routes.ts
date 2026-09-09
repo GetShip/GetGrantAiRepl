@@ -508,6 +508,51 @@ export async function registerRoutes(
   // filter; the route was never defined, so the dropdown offered "all sources"
   // and nothing else while 80+ funders sat in the table. Reads the shared index
   // rather than the grants table so it costs nothing on a warm cache.
+  // Replaces the three-line static file. The long tail is the whole organic
+  // case for a grant database — every open call is a page someone might search
+  // for — so the sitemap lists them instead of just the three landing pages.
+  // Closed and expired calls are left out: pointing Google at a page that says
+  // "this closed in 2024" earns nothing.
+  app.get("/sitemap.xml", async (_req, res) => {
+    try {
+      const { getGrantIndex } = await import("./services/grantSearch");
+      const index = await getGrantIndex();
+      const now = new Date();
+
+      const staticPages = [
+        { path: "/", changefreq: "weekly", priority: "1.0" },
+        { path: "/bidrag", changefreq: "daily", priority: "0.9" },
+        { path: "/priser", changefreq: "monthly", priority: "0.7" },
+      ];
+
+      const urls = staticPages.map(
+        (p) =>
+          `  <url>\n    <loc>${APP_URL}${p.path}</loc>\n` +
+          `    <changefreq>${p.changefreq}</changefreq>\n` +
+          `    <priority>${p.priority}</priority>\n  </url>`,
+      );
+
+      for (const grant of index) {
+        if (grant.status === "closed") continue;
+        if (grant.deadline && new Date(grant.deadline) < now) continue;
+        const lastmod = grant.createdAt ? new Date(grant.createdAt).toISOString().slice(0, 10) : null;
+        urls.push(
+          `  <url>\n    <loc>${APP_URL}/bidrag/${grant.id}</loc>\n` +
+            (lastmod ? `    <lastmod>${lastmod}</lastmod>\n` : "") +
+            `    <changefreq>weekly</changefreq>\n    <priority>0.6</priority>\n  </url>`,
+        );
+      }
+
+      res.type("application/xml").send(
+        `<?xml version="1.0" encoding="UTF-8"?>\n` +
+          `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join("\n")}\n</urlset>\n`,
+      );
+    } catch (error) {
+      console.error("Failed to build sitemap:", error);
+      res.status(500).type("text/plain").send("sitemap unavailable");
+    }
+  });
+
   app.get("/api/grants/sources", async (_req, res) => {
     try {
       const { getGrantIndex } = await import("./services/grantSearch");
